@@ -11,6 +11,7 @@
 		D4C2E3DA2F31DA54003D3577 /* Home.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Home.md; sourceTree = "<group>"; };
 		D4C2E3E22F31DB0F003D3577 /* Tag-Colors.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Tag-Colors.md"; sourceTree = "<group>"; };
 		D4C2E3F52F35CD79003D3577 /* TagListView.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagListView.md; sourceTree = "<group>"; };
+		D4C2E3FD2F361AD8003D3577 /* tagging_screenrec.mov */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; path = tagging_screenrec.mov; sourceTree = "<group>"; };
 		D4F5DA3B2F27F760001A21BF /* requirements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = requirements.md; sourceTree = "<group>"; };
 		D4F5DA3C2F27F78A001A21BF /* architecture.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = architecture.md; sourceTree = "<group>"; };
 		D4F5DA3F2F27F7F5001A21BF /* 0001-di-approach.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "0001-di-approach.md"; sourceTree = "<group>"; };
@@ -63,6 +64,7 @@
 				D4F5DA3E2F27F7E3001A21BF /* decisions */,
 				D4F5DA3C2F27F78A001A21BF /* architecture.md */,
 				D4F5DA3B2F27F760001A21BF /* requirements.md */,
+				D4C2E3FD2F361AD8003D3577 /* tagging_screenrec.mov */,
 			);
 			path = docs;
 			sourceTree = "<group>";

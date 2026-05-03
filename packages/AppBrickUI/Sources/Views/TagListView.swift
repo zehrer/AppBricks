@@ -29,8 +29,11 @@ struct TagListView: View {
     @Query(sort: [SortDescriptor(\Tag.name, order: .forward)])
     private var tags: [Tag]
 
-    @State private var newTagName: String = ""
-    @State private var newTagColor: SimpleColor = .none
+    @State private var draftName: String = ""
+    @State private var draftColor: SimpleColor = .red
+    @State private var isAddingNewTag: Bool = false
+    @FocusState private var isDraftFocused: Bool
+    @State private var pendingScrollID: String? = nil
 
     var allowsMultipleSelection: Bool = true
 
@@ -40,95 +43,108 @@ struct TagListView: View {
     }
 
     var body: some View {
-        List {
-            Section(header: Text("tags.header", bundle: .module)) {
-                ForEach(tags) { tag in
-                    Button(action: { toggleSelection(for: tag) }) {
-                        HStack(spacing: 12) {
-                            selectionIndicator(isSelected: isSelected(tag))
-                            Text(tag.name)
-                                .foregroundStyle(.primary)
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                            Spacer()
-                            colorDot(for: tag)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .contentShape(Rectangle())
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel(Text(tag.name))
-                    .accessibilityValue(Text(isSelected(tag) ? "tags.accessibility.selected" : "tags.accessibility.not_selected", bundle: .module))
-                }
-            }
-
-            Section(footer: Text("tags.footer.add_new", bundle: .module)) {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "plus.circle.fill")
-                            .foregroundStyle(.green)
-                        TextField(String(localized: "tags.placeholder.name", bundle: .module), text: $newTagName)
-                            .textInputAutocapitalization(.words)
-                            .autocorrectionDisabled(false)
-                    }
-
-                    HStack {
-                        Menu {
-                            Picker(String(localized: "tags.picker.color", bundle: .module), selection: $newTagColor) {
-                                ForEach(SimpleColor.allCases) { option in
-                                    HStack {
-                                        Circle()
-                                            .fill(option.color ?? .secondary.opacity(0.3))
-                                            .frame(width: 12, height: 12)
-                                        Text(SimpleColor.labelName(option), bundle: .module)
+        ScrollViewReader { proxy in
+            List {
+                Section(header: Text("tags.header", bundle: .module)) {
+                    ForEach(tags) { tag in
+                        Button(action: { toggleSelection(for: tag) }) {
+                            HStack(spacing: 12) {
+                                selectionIndicator(isSelected: isSelected(tag))
+                                Text(tag.name)
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                Spacer()
+                                Menu {
+                                    ForEach(SimpleColor.allCases) { color in
+                                        Button {
+                                            // Update the tag's color
+                                            tag.simpleColor = color
+                                            // Selecting a color should not toggle selection, so do nothing else
+                                        } label: {
+                                            Label(SimpleColor.labelName(color), systemImage: (tag.simpleColor == color) ? "checkmark.circle.fill" : "circle")
+                                        }
                                     }
-                                    .tag(option)
+                                } label: {
+                                    colorDot(fill: tag.simpleColor?.color)
                                 }
-                            }
-                        } label: {
-                            HStack {
-                                Circle()
-                                    .fill(newTagColor.color ?? .secondary.opacity(0.3))
-                                    .frame(width: 16, height: 16)
-                                Text(SimpleColor.labelName(newTagColor), bundle: .module)
-                                Image(systemName: "chevron.up.chevron.down")
-                                    .font(.footnote)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(.ultraThinMaterial, in: Capsule())
-                        }
-
-                        Spacer()
-
-                        Button(action: addNewTag) {
-                            Label {
-                                Text("tags.button.add_new", bundle: .module)
-                            } icon: {
-                                Image(systemName: "plus")
+                                .menuStyle(.borderlessButton)
+                                .accessibilityLabel(Text("tags.accessibility.change_color", bundle: .module))
                             }
                         }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(!canAddNewTag)
+                        .buttonStyle(.plain)
+                        .contentShape(Rectangle())
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel(Text(tag.name))
+                        .accessibilityValue(Text(isSelected(tag) ? "tags.accessibility.selected" : "tags.accessibility.not_selected", bundle: .module))
+                        .id(tag.persistentModelID)
+                    }
+                }
+
+                if isAddingNewTag {
+                    Section {
+                        HStack(spacing: 12) {
+                            selectionIndicator(isSelected: true)
+                            TextField(String(localized: "tags.placeholder.name", bundle: .module), text: $draftName)
+                                .focused($isDraftFocused)
+                                .submitLabel(.done)
+                                .onSubmit {
+                                    finalizeDraftIfPossible()
+                                }
+                            Spacer()
+                            colorPickerButton()
+                        }
+                        .contentShape(Rectangle())
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel(Text(String(localized: "tags.placeholder.name", bundle: .module)))
+                        .id(draftRowID)
+                    }
+                }
+
+                Section {
+                    Button(action: addInlineNewTag) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(.green)
+                            Text("tags.button.add_new", bundle: .module)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                        }
+                        .padding(.vertical, 6)
+                        .contentShape(Rectangle())
                         .accessibilityHint(Text("tags.accessibility.hint.create", bundle: .module))
                     }
+                    .buttonStyle(.plain)
                 }
-                .padding(.vertical, 4)
+            }
+            .onChange(of: pendingScrollID) { _, newValue in
+                if let id = newValue {
+                    withAnimation {
+                        proxy.scrollTo(id, anchor: .center)
+                    }
+                    // reset after scrolling
+                    pendingScrollID = nil
+                }
             }
         }
         .navigationTitle(Text("tags.title", bundle: .module))
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button(role: .cancel) { dismiss() } label: {
+                Button(role: .cancel) {
+                    discardDraft()
+                    dismiss()
+                } label: {
                     Image(systemName: "xmark.circle.fill")
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button { dismiss() } label: {
+                Button {
+                    finalizeDraftIfPossible()
+                    dismiss()
+                } label: {
                     Image(systemName: "checkmark.circle.fill")
                 }
-                .disabled(false)
+                .disabled(isAddingNewTag && draftName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
     }
@@ -152,29 +168,37 @@ struct TagListView: View {
         }
     }
 
-    // MARK: - Add new tag
+    // MARK: - Inline creation helpers
 
-    private var canAddNewTag: Bool {
-        let trimmed = newTagName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return false }
-        return !tags.contains(where: { $0.name.lowercased() == trimmed.lowercased() })
+    private func addInlineNewTag() {
+        guard !isAddingNewTag else {
+            isDraftFocused = true
+            pendingScrollID = draftRowID
+            return
+        }
+
+        draftName = ""
+        draftColor = .red
+        isAddingNewTag = true
+        isDraftFocused = true
+        pendingScrollID = draftRowID
     }
 
-    private func addNewTag() {
-        let trimmed = newTagName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        guard !tags.contains(where: { $0.name.lowercased() == trimmed.lowercased() }) else { return }
-
-        guard let tag = Tag(trimmed) else { return }
-        tag.simpleColor = newTagColor == .none ? nil : newTagColor
+    private func finalizeDraftIfPossible() {
+        guard isAddingNewTag else { return }
+        let trimmed = draftName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let normalized = Tag.normalizedTagName(from: trimmed) else { return }
+        guard let tag = Tag(normalized) else { return }
+        tag.simpleColor = draftColor
         modelContext.insert(tag)
-
-        // Select the newly created tag
         selection.insert(tag)
+        isAddingNewTag = false
+        draftName = ""
+    }
 
-        // Reset inputs
-        newTagName = ""
-        newTagColor = .none
+    private func discardDraft() {
+        isAddingNewTag = false
+        draftName = ""
     }
 
     // MARK: - UI bits
@@ -186,12 +210,30 @@ struct TagListView: View {
     }
 
     @ViewBuilder
-    private func colorDot(for tag: Tag) -> some View {
-        let fill: Color = tag.simpleColor?.color ?? Color.secondary.opacity(0.3)
+    private func colorDot(fill: Color?) -> some View {
+        let resolvedFill: Color = fill ?? Color.secondary.opacity(0.3)
         Circle()
-            .fill(fill)
+            .fill(resolvedFill)
             .frame(width: 16, height: 16)
     }
+
+    @ViewBuilder
+    private func colorPickerButton() -> some View {
+        Menu {
+            ForEach(SimpleColor.allCases) { color in
+                Button {
+                    draftColor = color
+                } label: {
+                    Label(SimpleColor.labelName(color), systemImage: color == draftColor ? "checkmark.circle.fill" : "circle")
+                }
+            }
+        } label: {
+            colorDot(fill: draftColor.color)
+        }
+        .menuStyle(.borderlessButton)
+    }
+
+    private var draftRowID: String { "draft-row" }
 }
 
 // MARK: - Preview
@@ -222,10 +264,4 @@ struct TagListView: View {
     }
     .modelContainer(container)
     .environment(\.locale, Locale(identifier: "en"))
-}
-
-
-#Preview("English") {
-    NavigationStack { TagListView() }
-        .environment(\.locale, Locale(identifier: "en"))
 }
