@@ -55,13 +55,66 @@ DemoApps are examples only and are not required for using AppBricks.
 
 ---
 
+## Core Concepts
+
+### AppEnvironment
+
+`AppEnvironment` is the explicit dependency carrier passed into every feature.
+It holds cross-cutting infrastructure (logging, plugin services) without global state.
+
+```swift
+let env = AppEnvironment.live(subsystem: "com.example.MyApp")
+```
+
+### Plugin System
+
+Plugins are modules that register their services into a `PluginContainer` at app startup.
+Features resolve what they need; they never know which plugin provided it.
+
+**Define a plugin:**
+
+```swift
+struct NotePlugin: AppPlugin {
+    let name = "Note"
+    func register(in container: PluginContainer) {
+        container.register(NoteService())           // eager — shared instance
+        container.register(NoteParser.self) { NoteParser() } // lazy — new per resolve
+    }
+}
+```
+
+**Wire it in `@main`:**
+
+```swift
+@main
+struct MyApp: App {
+    let env: AppEnvironment = {
+        let container = PluginContainer()
+        NotePlugin().register(in: container)
+        return AppEnvironment.live(subsystem: "com.example.MyApp", plugins: container)
+    }()
+
+    var body: some Scene {
+        WindowGroup { RootView(env: env) }
+    }
+}
+```
+
+**Resolve inside a feature:**
+
+```swift
+let service = env.plugins.resolve(NoteService.self)
+```
+
+---
+
 ## Usage
 
 The typical workflow is:
 1. Create a new iOS or macOS project using Xcode
 2. Add AppBricks packages via Swift Package Manager
-3. Use AppBricks-provided root views and services
-4. Assemble features in your application shell
+3. Define plugins for each feature module
+4. Assemble plugins in the host app's `@main` entry point
 
 No project templates are required.
 
