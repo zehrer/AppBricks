@@ -19,17 +19,20 @@ import os
 
 public struct AppEnvironment: Sendable {
   public let logger: Logger
+  public let plugins: PluginContainer
 
-  public init(logger: Logger) {
+  public init(logger: Logger, plugins: PluginContainer = PluginContainer()) {
     self.logger = logger
+    self.plugins = plugins
   }
 }
 
 public extension AppEnvironment {
   static func live(
     subsystem: String,
-    category: String = "App"
+    category: String = "App",
+    plugins: PluginContainer = PluginContainer()
   ) -> AppEnvironment {
-    .init(logger: Logger(subsystem: subsystem, category: category))
+    .init(logger: Logger(subsystem: subsystem, category: category), plugins: plugins)
   }
 }
