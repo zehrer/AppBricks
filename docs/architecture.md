@@ -47,5 +47,5 @@ Feature
 | Type | Role |
 |---|---|
 | `AppEnvironment` | Explicit dependency carrier (logger + plugins) |
-| `PluginContainer` | Service registry; supports eager instances and lazy factories |
+| `PluginContainer` | Thread-safe service registry; eager instances, lazy factories, lazy singletons |
 | `AppPlugin` | Protocol a feature module conforms to for self-registration |

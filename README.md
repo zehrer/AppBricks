@@ -77,8 +77,9 @@ Features resolve what they need; they never know which plugin provided it.
 struct NotePlugin: AppPlugin {
     let name = "Note"
     func register(in container: PluginContainer) {
-        container.register(NoteService())           // eager — shared instance
-        container.register(NoteParser.self) { NoteParser() } // lazy — new per resolve
+        container.register(NoteService())                          // eager — shared instance, created now
+        container.register(NoteParser.self) { NoteParser() }      // lazy factory — new instance per resolve
+        container.registerSingleton(NoteCache.self) { NoteCache() } // lazy singleton — created once on first resolve
     }
 }
 ```
@@ -103,7 +104,11 @@ struct MyApp: App {
 **Resolve inside a feature:**
 
 ```swift
-let service = env.plugins.resolve(NoteService.self)
+// Optional — use when a missing service is acceptable
+let parser = env.plugins.resolve(NoteParser.self)
+
+// Required — crashes with a clear message if not registered (programmer error)
+let cache = env.plugins.require(NoteCache.self)
 ```
 
 ---

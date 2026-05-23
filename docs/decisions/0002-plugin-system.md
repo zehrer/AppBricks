@@ -30,9 +30,29 @@ container.register(AnalyticsService())
 container.register(ImageCache.self) { ImageCache() }
 ```
 
+**Lazy singleton** — use when creation should be deferred but the same instance reused:
+
+```swift
+container.registerSingleton(DatabaseService.self) { DatabaseService() }
+```
+
+## Resolution
+
+Use `resolve` when a service is optional:
+
+```swift
+let analytics = container.resolve(AnalyticsService.self)  // → T?
+```
+
+Use `require` when a missing registration is a programmer error:
+
+```swift
+let db = container.require(DatabaseService.self)  // → T, fatalError if missing
+```
+
 ## Consequences
 
 - Plugin order of registration is the responsibility of the host app
 - No automatic dependency resolution between plugins (YAGNI for v1.0)
-- `PluginContainer` is `@unchecked Sendable`; registration must complete before
-  concurrent access begins (i.e. before the SwiftUI scene is created)
+- `PluginContainer` uses `NSLock` internally; safe to resolve from any thread
+  after startup registration is complete

@@ -6,11 +6,21 @@ import Testing
 @Suite("PluginContainer")
 struct PluginContainerTests {
 
+    // MARK: Eager instance
+
     @Test func resolveEagerInstance() {
         let container = PluginContainer()
         container.register("hello" as String)
         #expect(container.resolve(String.self) == "hello")
     }
+
+    @Test func eagerInstanceIsAlwaysSame() {
+        let container = PluginContainer()
+        container.register("hello" as String)
+        #expect(container.resolve(String.self) == container.resolve(String.self))
+    }
+
+    // MARK: Lazy factory
 
     @Test func resolveFromFactory() {
         let container = PluginContainer()
@@ -21,12 +31,41 @@ struct PluginContainerTests {
     @Test func factoryIsCalledOnEachResolve() {
         var callCount = 0
         let container = PluginContainer()
-        container.resolve(Int.self)                      // nothing registered yet
         container.register(Int.self) { callCount += 1; return callCount }
         _ = container.resolve(Int.self)
         _ = container.resolve(Int.self)
         #expect(callCount == 2)
     }
+
+    // MARK: Lazy singleton
+
+    @Test func singletonFactoryCalledOnlyOnce() {
+        var callCount = 0
+        let container = PluginContainer()
+        container.registerSingleton(Int.self) { callCount += 1; return callCount }
+        _ = container.resolve(Int.self)
+        _ = container.resolve(Int.self)
+        _ = container.resolve(Int.self)
+        #expect(callCount == 1)
+    }
+
+    @Test func singletonReturnsSameValue() {
+        let container = PluginContainer()
+        container.registerSingleton(Int.self) { 99 }
+        let a = container.resolve(Int.self)
+        let b = container.resolve(Int.self)
+        #expect(a == b)
+    }
+
+    // MARK: require
+
+    @Test func requireReturnsRegisteredValue() {
+        let container = PluginContainer()
+        container.register(7 as Int)
+        #expect(container.require(Int.self) == 7)
+    }
+
+    // MARK: General
 
     @Test func eagerInstanceOverridesFactory() {
         let container = PluginContainer()
