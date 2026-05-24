@@ -39,19 +39,21 @@ focus on domain-specific problems instead of rebuilding infrastructure.
 
 ---
 
-## Project Structure (typical)
+## Project Structure
 
+```
 AppBricks/
-├─ Packages/
-│  ├─ AppBricksCore
-│  ├─ AppBricksUI
-│  └─ Features/
-├─ DemoApps/
-├─ docs/
-└─ README.md
+├─ Package.swift          ← root package consumed via SPM
+├─ packages/
+│  ├─ AppBrick/           ← core runtime (local Xcode development)
+│  └─ AppBrickUI/         ← SwiftUI components (local Xcode development)
+├─ DemoApps/              ← example apps, not required for using AppBricks
+└─ docs/
+```
 
-
-DemoApps are examples only and are not required for using AppBricks.
+The sub-packages under `packages/` mirror the root products and are kept
+for standalone Xcode development. Source files are not duplicated — the root
+`Package.swift` points its targets directly at `packages/*/Sources/`.
 
 ---
 
@@ -195,3 +197,33 @@ More details please contact the project maintainer.
 
 AppBricks is in early development.
 APIs and architecture may evolve until the first stable release.
+
+### What is done
+
+- `AppEnvironment` — explicit dependency carrier with logger
+- `PluginContainer` — thread-safe service registry (eager, lazy factory, lazy singleton)
+- `AppPlugin` protocol — self-registering feature modules
+- Root `Package.swift` — publishable as a Swift package with two products
+- `AppBrickUI` — shared SwiftUI primitives (tags, content list, localisation)
+
+---
+
+## Next Steps
+
+### Near term
+
+- **SwiftUI environment integration** — add an `EnvironmentKey` for `AppEnvironment` in `AppBrickUI` so features can access it via `@Environment(\.appEnvironment)` instead of explicit prop-drilling
+- **Real-project validation** — use AppBricks in a host app to smoke-test the plugin wiring end-to-end and surface any ergonomic gaps
+- **macOS support** — extend platform targets from `.iOS(.v17)` to include `.macOS(.v14)`
+
+### Medium term
+
+- **First tagged release** — tag `v0.1.0` once the API feels stable after real-project usage
+- **AppBrickUI depends on AppBrick** — currently the UI package is independent; wire in `AppEnvironment` access once the EnvironmentKey exists
+- **Demo app update** — update `BrickNote` or `BrickList` to demonstrate full plugin wiring from `@main` through to a feature view
+
+### Out of scope for v1.0
+
+- Automatic dependency resolution between plugins
+- Code generation or visual DSL
+- TCA enforcement
