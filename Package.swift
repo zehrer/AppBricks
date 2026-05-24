@@ -15,7 +15,7 @@
 // swift-tools-version: 6.2
 //
 // Root package — consumed via Swift Package Manager.
-// packages/AppBrickCore/Package.swift and packages/AppBrickUI/Package.swift
+// packages/AppBrick/Package.swift and packages/AppBrickUI/Package.swift
 // are kept separately for local Xcode workspace development.
 
 import PackageDescription
@@ -33,7 +33,7 @@ let package = Package(
     targets: [
         .target(
             name: "AppBrick",
-            path: "packages/AppBrickCore/Sources"
+            path: "packages/AppBrick/Sources"
         ),
         .target(
             name: "AppBrickUI",
