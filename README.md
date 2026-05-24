@@ -113,11 +113,50 @@ let cache = env.plugins.require(NoteCache.self)
 
 ---
 
+## Swift Package Manager
+
+AppBricks is distributed as a single Swift package with two library products.
+
+### Products
+
+| Product | Description |
+|---|---|
+| `AppBrick` | Core runtime — `AppEnvironment`, `PluginContainer`, `AppPlugin` |
+| `AppBrickUI` | SwiftUI components — tags, lists, shared UI primitives. Depends on `AppBrick`. |
+
+Import only what you need. A feature that has no UI only needs `AppBrick`.
+
+### Adding the dependency
+
+In your `Package.swift`:
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/zehrer/AppBricks", from: "1.0.0"),
+],
+targets: [
+    .target(
+        name: "MyFeature",
+        dependencies: [
+            .product(name: "AppBrick",   package: "AppBricks"),  // core only
+        ]
+    ),
+    .target(
+        name: "MyFeatureUI",
+        dependencies: [
+            .product(name: "AppBrickUI", package: "AppBricks"),  // includes AppBrick
+        ]
+    ),
+]
+```
+
+---
+
 ## Usage
 
 The typical workflow is:
 1. Create a new iOS or macOS project using Xcode
-2. Add AppBricks packages via Swift Package Manager
+2. Add AppBricks via Swift Package Manager (see above)
 3. Define plugins for each feature module
 4. Assemble plugins in the host app's `@main` entry point
 
