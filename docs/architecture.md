@@ -15,7 +15,7 @@
              │ depends on
 ┌────────────▼────────────────┐
 │       Core Packages         │  AppEnvironment, PluginContainer,
-│  (AppBrickCore, AppBrickUI) │  shared models, base UI
+│  (AppBrick, AppBrickUI) │  shared models, base UI
 └─────────────────────────────┘
 ```
 
@@ -42,7 +42,7 @@ Feature
   └─ calls env.plugins.resolve(MyService.self) when needed
 ```
 
-## Key Types (AppBrickCore)
+## Key Types (AppBrick)
 
 | Type | Role |
 |---|---|
